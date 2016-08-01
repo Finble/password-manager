@@ -1,3 +1,7 @@
+// DELETE PERSIST FILE BEFORE CREATING (+ GETTING) ACCOUNT VIA TERMINAL 
+// node app.js create -n w, -u x, -p y -m z
+// node app.js get -n w, -u x, -p y -m z
+
 console.log('starting password manager');
 
 var crypto = require('crypto-js'); 
@@ -92,11 +96,6 @@ function getAccount (accountName, masterPassword) {
 	return matchedAccount;
 }
 
-// try and catch with error messages for both create + get
-
-// if creating an account, and you have all arguments, then account created
-// if creating an account and you don't have all arguments, then unable to create an account
-
 if (command === 'create') {
 	try {
 		var createdAccount = createAccount({
@@ -109,10 +108,6 @@ if (command === 'create') {
 	} catch (e) {
 		console.log('Unable to create account');
 	}
-
-// if getting an accountm and you can't match masterPassword, then account can't be found
-// if getting an account, and account does not match an account in the account array, then account cannot be found
-// if getting an account, and nothing is recognisable, then cannot fetch account
 
 } else if (command === 'get') {
 	try {
