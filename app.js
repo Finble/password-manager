@@ -1,6 +1,6 @@
 console.log('starting password manager');
 
-var crypto = require('crypto-js'); // require to enable encryption = INSTALL IN TERMINAL!
+var crypto = require('crypto-js'); 
 var storage = require('node-persist');
 storage.initSync();
 
@@ -53,34 +53,22 @@ var argv = require('yargs')
 	.argv;
 var command = argv._[0];
 
-// ENCRYPTION
-// create getAccounts function to grab all accounts in an array using a masterPassword and decrypt, implement it within createAccount
 
 function getAccounts (masterPassword) {
-	// use getItemSync to fetch accounts saved locally
 	var encryptedAccount = storage.getItemSync('accounts');
-	var accounts = [];  // by default, accounts are an array
-	// decrypt
-	if (typeof encryptedAccount !== 'undefined') {  // if array is NOT undefined/empty, there is an account to decrypt, but if array IS undefined, then there is nothing to decrypt
-		var bytes = crypto.AES.decrypt(encryptedAccount, masterPassword);  // decrypt account
-		var accounts = JSON.parse(bytes.toString(crypto.enc.Utf8));  // set it to accounts
+	var accounts = [];  
+	if (typeof encryptedAccount !== 'undefined') {  
+		var bytes = crypto.AES.decrypt(encryptedAccount, masterPassword);  
+		var accounts = JSON.parse(bytes.toString(crypto.enc.Utf8));  
 	}
-	// return accounts array
 	return accounts;
 }
-
-// create saveAccounts to encrypt accounts once created and added to array
 
 function saveAccounts (accounts, masterPassword) {
-	// encrypt accounts
 	var encryptedAccount = crypto.AES.encrypt(JSON.stringify(accounts), masterPassword);
-	// setItemSync
 	storage.setItemSync('accounts', encryptedAccount.toString());
-	// return accounts;
 	return accounts;
 }
-
-// refactor createAccount to implement encryption from getAccounts
 
 function createAccount (account, masterPassword) {  
 	var accounts = getAccounts(masterPassword);
@@ -88,21 +76,10 @@ function createAccount (account, masterPassword) {
 	accounts.push(account);
 	saveAccounts(accounts, masterPassword);
 
-	// var accounts = storage.getItemSync('accounts');
-
-	// if (typeof accounts === 'undefined') {
-	// 	accounts = [];
-	// }
-
-	// storage.setItemSync('accounts', accounts);
-
 	return account;
 }
 
-// refactor getAccount to implement encryption from getAccounts
-
 function getAccount (accountName, masterPassword) {  
-	// var accounts = storage.getItemSync('accounts');
 	var accounts = getAccounts(masterPassword);
 	var matchedAccount;
 
@@ -115,21 +92,39 @@ function getAccount (accountName, masterPassword) {
 	return matchedAccount;
 }
 
-if (command === 'create') {
-	var createdAccount = createAccount({
-		name: argv.name,
-		username: argv.username,
-		password: argv.password
-	}, argv.masterPassword);  
-	console.log('Account created!');
-	console.log(createdAccount);
-} else if (command === 'get') {
-	var fetchedAccount = getAccount(argv.name, argv.masterPassword);  
+// try and catch with error messages for both create + get
 
-	if (typeof fetchedAccount === 'undefined') {
-		console.log('Account not found');
-	} else {
-		console.log('Account found!');
-		console.log(fetchedAccount);
+// if creating an account, and you have all arguments, then account created
+// if creating an account and you don't have all arguments, then unable to create an account
+
+if (command === 'create') {
+	try {
+		var createdAccount = createAccount({
+			name: argv.name,
+			username: argv.username,
+			password: argv.password
+		}, argv.masterPassword);  
+		console.log('Account created!');
+		console.log(createdAccount);
+	} catch (e) {
+		console.log('Unable to create account');
+	}
+
+// if getting an accountm and you can't match masterPassword, then account can't be found
+// if getting an account, and account does not match an account in the account array, then account cannot be found
+// if getting an account, and nothing is recognisable, then cannot fetch account
+
+} else if (command === 'get') {
+	try {
+		var fetchedAccount = getAccount(argv.name, argv.masterPassword);  
+
+		if (typeof fetchedAccount === 'undefined') {
+			console.log('Account not found');
+		} else {
+			console.log('Account found!');
+			console.log(fetchedAccount);
+		}
+	} catch (e) {
+		console.log('Unable to fetch account');
 	}
 }
