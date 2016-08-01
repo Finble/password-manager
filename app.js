@@ -25,6 +25,13 @@ var argv = require('yargs')
 				alias: 'p',
 				description: 'Account password',
 				type: 'string'
+			},
+			// masterPassword is for array, needed for create command
+			masterPassword: {
+				demand: true,
+				alias: 'm',
+				description: 'Master password',
+				type: 'string'
 			}
 		}).help('help');
 	})
@@ -35,6 +42,13 @@ var argv = require('yargs')
 				alias: 'n',
 				description: 'Account name (eg: Twitter, Facebook)',
 				type: 'string'
+			},
+			// masterPassword is for array, needed for get command
+			masterPassword: {
+				demand: true,
+				alias: 'm',
+				description: 'Master password',
+				type: 'string'
 			}
 		}).help('help');
 	})
@@ -42,7 +56,7 @@ var argv = require('yargs')
 	.argv;
 var command = argv._[0];
 
-function createAccount (account) {
+function createAccount (account, masterPassword) {  // add masterPassword argument
 	var accounts = storage.getItemSync('accounts');
 
 	if (typeof accounts === 'undefined') {
@@ -55,7 +69,7 @@ function createAccount (account) {
 	return account;
 }
 
-function getAccount (accountName) {
+function getAccount (accountName, masterPassword) {  // add masterPassword argument
 	var accounts = storage.getItemSync('accounts');
 	var matchedAccount;
 
@@ -73,11 +87,11 @@ if (command === 'create') {
 		name: argv.name,
 		username: argv.username,
 		password: argv.password
-	});
+	}, argv.masterPassword);  // add masterPassword as argument
 	console.log('Account created!');
 	console.log(createdAccount);
 } else if (command === 'get') {
-	var fetchedAccount = getAccount(argv.name);
+	var fetchedAccount = getAccount(argv.name, argv.masterPassword);  // add masterPassword as argument
 
 	if (typeof fetchedAccount === 'undefined') {
 		console.log('Account not found');
