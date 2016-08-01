@@ -1,9 +1,8 @@
 console.log('starting password manager');
 
+var crypto = require('crypto-js'); // require to enable encryption = INSTALL IN TERMINAL!
 var storage = require('node-persist');
 storage.initSync();
-
-// set up argv so that user can input date into terminal, and it will be saved via terminal (so mocking user input)
 
 var argv = require('yargs')
 	.command('create', 'Create a new account', function (yargs) {
@@ -26,7 +25,6 @@ var argv = require('yargs')
 				description: 'Account password',
 				type: 'string'
 			},
-			// masterPassword is for array, needed for create command
 			masterPassword: {
 				demand: true,
 				alias: 'm',
@@ -43,7 +41,6 @@ var argv = require('yargs')
 				description: 'Account name (eg: Twitter, Facebook)',
 				type: 'string'
 			},
-			// masterPassword is for array, needed for get command
 			masterPassword: {
 				demand: true,
 				alias: 'm',
@@ -56,21 +53,57 @@ var argv = require('yargs')
 	.argv;
 var command = argv._[0];
 
-function createAccount (account, masterPassword) {  // add masterPassword argument
-	var accounts = storage.getItemSync('accounts');
+// ENCRYPTION
+// create getAccounts function to grab all accounts in an array using a masterPassword and decrypt, implement it within createAccount
 
-	if (typeof accounts === 'undefined') {
-		accounts = [];
+function getAccounts (masterPassword) {
+	// use getItemSync to fetch accounts saved locally
+	var encryptedAccount = storage.getItemSync('accounts');
+	var accounts = [];  // by default, accounts are an array
+	// decrypt
+	if (typeof encryptedAccount !== 'undefined') {  // if array is NOT undefined/empty, there is an account to decrypt, but if array IS undefined, then there is nothing to decrypt
+		var bytes = crypto.AES.decrypt(encryptedAccount, masterPassword);  // decrypt account
+		var accounts = JSON.parse(bytes.toString(crypto.enc.Utf8));  // set it to accounts
 	}
+	// return accounts array
+	return accounts;
+}
+
+// create saveAccounts to encrypt accounts once created and added to array
+
+function saveAccounts (accounts, masterPassword) {
+	// encrypt accounts
+	var encryptedAccount = crypto.AES.encrypt(JSON.stringify(accounts), masterPassword);
+	// setItemSync
+	storage.setItemSync('accounts', encryptedAccount.toString());
+	// return accounts;
+	return accounts;
+}
+
+// refactor createAccount to implement encryption from getAccounts
+
+function createAccount (account, masterPassword) {  
+	var accounts = getAccounts(masterPassword);
 
 	accounts.push(account);
-	storage.setItemSync('accounts', accounts);
+	saveAccounts(accounts, masterPassword);
+
+	// var accounts = storage.getItemSync('accounts');
+
+	// if (typeof accounts === 'undefined') {
+	// 	accounts = [];
+	// }
+
+	// storage.setItemSync('accounts', accounts);
 
 	return account;
 }
 
-function getAccount (accountName, masterPassword) {  // add masterPassword argument
-	var accounts = storage.getItemSync('accounts');
+// refactor getAccount to implement encryption from getAccounts
+
+function getAccount (accountName, masterPassword) {  
+	// var accounts = storage.getItemSync('accounts');
+	var accounts = getAccounts(masterPassword);
 	var matchedAccount;
 
 	accounts.forEach(function (account) {
@@ -87,11 +120,11 @@ if (command === 'create') {
 		name: argv.name,
 		username: argv.username,
 		password: argv.password
-	}, argv.masterPassword);  // add masterPassword as argument
+	}, argv.masterPassword);  
 	console.log('Account created!');
 	console.log(createdAccount);
 } else if (command === 'get') {
-	var fetchedAccount = getAccount(argv.name, argv.masterPassword);  // add masterPassword as argument
+	var fetchedAccount = getAccount(argv.name, argv.masterPassword);  
 
 	if (typeof fetchedAccount === 'undefined') {
 		console.log('Account not found');
