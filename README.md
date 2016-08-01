@@ -6,7 +6,7 @@ node.js password manager file
 ``````
 set-up
 
-    npm install: crypto.js (for encryption) + node-persist (to enable saving locally to pc)
+    npm install: crypto.js (for encryption) + node-persist (to enable saving locally to pc) + yargs (to enable argv)
 
     enable npm start be run in terminal (vs node app.js), update package.json:
 
